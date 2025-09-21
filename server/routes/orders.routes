@@ -1,7 +1,0 @@
-// In ~/server/routes/orders.routes.js
-import { Router } from 'express';
-const router = Router();
-
-// Add your routes here
-
-export default router;

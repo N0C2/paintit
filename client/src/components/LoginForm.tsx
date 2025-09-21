@@ -1,38 +1,67 @@
 import React, { useState } from 'react';
+import '../App.css';
 
-export default function LoginForm({ onSuccess }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await fetch('http://192.168.178.49:4000/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-      if (res.ok) {
-        // Login successful
-        onSuccess();
-      } else {
-        // Login failed
-        alert('Login failed. Please check your credentials.');
-      }
-    } catch (err) {
-      console.error('Failed to login:', err);
-      alert('Failed to connect to the server.');
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      {/* Dein Formular-HTML hier */}
-      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-      <button type="submit">Einloggen</button>
-    </form>
-  );
+interface LoginFormProps {
+    onLoginSuccess: (token: string) => void;
+    API_URL: string;
 }
+
+const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, API_URL }) => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        try {
+            const response = await fetch(`${API_URL}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message || 'Login fehlgeschlagen');
+            }
+            onLoginSuccess(data.token);
+        } catch (err: any) {
+            setError(err.message);
+        }
+    };
+
+    return (
+        <div className="login-container">
+            <div className="login-form-container">
+                <form onSubmit={handleSubmit}>
+                    <h1>Login</h1>
+                    {error && <p className="error">{error}</p>}
+                    <div className="form-group">
+                        <label htmlFor="email">Email</label>
+                        <input
+                            type="email"
+                            id="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="password">Passwort</label>
+                        <input
+                            type="password"
+                            id="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <button type="submit" className="primary-button">Anmelden</button>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+export default LoginForm;
+

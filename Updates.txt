@@ -1,8 +1,14 @@
-001-Base
-002-Working Start Setup
-003-added Coockie
-004-Dashboard, NewOrder
+Dashboard working
+NewOrder working
+Login Working
+Setup-protcoll Working
+StyleDesign Implemented
+AuthCookies Implemented
 
 
-______________________
-Benutzer Name,Vorname,Filiale,Berechtigung,etc
+__________________________
+TO-DO
+Admin Pannel (Benutzer erstellen,Daten zuweisen)
+Auftragsliste (FertigstellungsDatum Verschieben, Aufträge Abschließen,)
+Benutzer Erstellung (PasswortGenerator)
+Abgeschlossene Aufträge (als SideMenu)

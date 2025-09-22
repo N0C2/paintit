@@ -9,9 +9,7 @@ export const isSetupComplete = () => {
 };
 
 export const getDbPool = () => {
-    if (pool) {
-        return pool;
-    }
+    if (pool) return pool;
     if (isSetupComplete()) {
         dotenv.config();
         pool = mysql.createPool({
@@ -28,4 +26,3 @@ export const getDbPool = () => {
     }
     return null;
 };
-

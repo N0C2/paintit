@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paint.IT – Projektdokumentation & Setup-Tutorial</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2rem; background: #f8f9fa; color: #222; }
+        h1, h2, h3 { color: #007bff; }
+        code, pre { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; }
+        .section { margin-bottom: 2.5rem; }
+        ul, ol { margin-left: 1.5rem; }
+        .important { color: #dc3545; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Paint.IT – Projektdokumentation</h1>
+    <div class="section">
+        <h2>1. Projektüberblick</h2>
+        <p><strong>Paint.IT</strong> ist ein Fullstack-System zur Verwaltung von Werkstattaufträgen, Benutzern und Filialen mit folgenden Kernfunktionen:</p>
+        <ul>
+            <li>Benutzerverwaltung mit Rollen (Admin, Werkstatt, Buchhaltung, etc.)</li>
+            <li>Multi-Filial-Unterstützung (Benutzer können mehreren Filialen zugeordnet werden)</li>
+            <li>Auftragsmanagement: Anlegen, Bearbeiten, Löschen, Abschließen von Aufträgen</li>
+            <li>Abgeschlossene Aufträge werden separat gelistet</li>
+            <li>Fertigstellungsdatum kann bearbeitet werden, alte Werte werden dokumentiert</li>
+            <li>Filter- und Suchfunktionen für Aufträge</li>
+            <li>Frontend: React + TypeScript, Backend: Node.js (Express, ES Modules), Datenbank: MariaDB/MySQL</li>
+            <li>Authentifizierung via JWT</li>
+        </ul>
+    </div>
+    <div class="section">
+        <h2>2. Setup-Tutorial (neuer Server)</h2>
+        <h3>Voraussetzungen</h3>
+        <ul>
+            <li>Node.js (empfohlen: v18+)</li>
+            <li>npm (wird mit Node installiert)</li>
+            <li>MariaDB oder MySQL-Server (empfohlen: MariaDB 10.5+)</li>
+            <li>Git (optional, für Cloning)</li>
+        </ul>
+        <h3>Schritt-für-Schritt-Anleitung</h3>
+        <ol>
+DB_USER=deinuser
+DB_PASSWORD=deinpasswort
+DB_NAME=paintit
+JWT_SECRET=dein_geheimes_token</pre>
+                <li><strong>System aktualisieren & Grundpakete installieren</strong><br>
+                    <pre>sudo apt update && sudo apt upgrade -y
+    sudo apt install -y git curl build-essential</pre>
+                </li>
+                <li><strong>Node.js & npm installieren (empfohlen: Node 18 LTS)</strong><br>
+                    <pre>curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+    sudo apt install -y nodejs</pre>
+                    <span class="important">Prüfen:</span> <code>node -v</code> & <code>npm -v</code>
+                </li>
+                <li><strong>MariaDB installieren</strong><br>
+                    <pre>sudo apt install -y mariadb-server mariadb-client</pre>
+                    <span class="important">Starte und sichere MariaDB:</span>
+                    <pre>sudo systemctl enable mariadb
+    sudo systemctl start mariadb
+    sudo mysql_secure_installation</pre>
+                </li>
+                <li><strong>Datenbank & User anlegen</strong><br>
+                    <pre>sudo mysql -u root -p
+    CREATE DATABASE paintit CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE USER 'paintituser'@'localhost' IDENTIFIED BY 'deinpasswort';
+    GRANT ALL PRIVILEGES ON paintit.* TO 'paintituser'@'localhost';
+    FLUSH PRIVILEGES;
+    EXIT;
+    </pre>
+                </li>
+                <li><strong>Projekt klonen</strong><br>
+                    <pre>git clone &lt;REPO_URL&gt; paintit
+    cd paintit</pre>
+                </li>
+                <li><strong>Backend einrichten</strong><br>
+                    <pre>cd server
+    npm install</pre>
+                    <span class="important">.env anlegen:</span>
+                    <pre>DB_HOST=localhost
+    DB_USER=paintituser
+    DB_PASSWORD=deinpasswort
+    DB_NAME=paintit
+    JWT_SECRET=dein_geheimes_token</pre>
+                    <span class="important">Setup ausführen:</span>
+                    <pre>npm run setup</pre>
+                    <span class="important">Server starten:</span>
+                    <pre>npm start</pre>
+                </li>
+                <li><strong>Frontend einrichten</strong><br>
+                    <pre>cd ../client
+    npm install
+    npm run dev</pre>
+                </li>
+                <li><strong>Projekt im Browser öffnen</strong><br>
+                    <code>http://localhost:5173</code> (Frontend) und <code>http://localhost:3001</code> (Backend-API)
+                </li>
+        </ol>
+        <h3>Wichtige Abhängigkeiten (server)</h3>
+        <ul>
+            <li>express, cors, dotenv, mysql2, bcrypt, jsonwebtoken, crypto, fs/promises</li>
+        </ul>
+        <h3>Wichtige Abhängigkeiten (client)</h3>
+        <ul>
+            <li>react, react-dom, react-router-dom, typescript, vite</li>
+        </ul>
+        <h3>Hinweise</h3>
+        <ul>
+            <li>Für Produktivbetrieb sichere Passwörter und Umgebungsvariablen verwenden!</li>
+            <li>MariaDB/MySQL-User benötigt Rechte zum Anlegen von Tabellen und Datenbanken.</li>
+            <li>Frontend und Backend können auf unterschiedlichen Servern laufen, API-URL ggf. anpassen.</li>
+        </ul>
+    </div>
+    <div class="section">
+        <h2>3. Kontakt & Support</h2>
+        <p>Bei Fragen oder Problemen: <code>antimo.cimenes@gmail.com</code> oder im Projekt-Repository ein Issue eröffnen.</p>
+    </div>
+</body>
+</html>

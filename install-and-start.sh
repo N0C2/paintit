@@ -1,66 +1,132 @@
 #!/bin/bash
-# Komplett-Setup- und Startskript für Paint.IT (Ubuntu/Linux)
-# 1. Öffentliche IP ermitteln
-# 2. Abhängigkeiten installieren (global)
-# 3. Frontend & Backend installieren
-# 4. Frontend & Backend starten
 
-set -e
+# Color definitions
+BLUE="\033[1;34m"
+GREEN="\033[1;32m"
+YELLOW="\033[1;33m"
+RED="\033[1;31m"
+NC="\033[0m" # No Color
 
-# 1. Öffentliche IP ermitteln
-PUBLIC_IP=$(curl -s https://api.ipify.org)
-if [ -z "$PUBLIC_IP" ]; then
-  echo "Konnte öffentliche IP nicht ermitteln!"
-  exit 1
-fi
+# Function to print styled messages
+print_info() {
+    echo -e "${BLUE}INFO: $1${NC}"
+}
 
-echo "[1/4] Öffentliche IP: $PUBLIC_IP"
+print_success() {
+    echo -e "${GREEN}SUCCESS: $1${NC}"
+}
 
-# 2. Node.js & npm prüfen
-if ! command -v node >/dev/null 2>&1; then
-  echo "Node.js nicht gefunden! Bitte vorher Node.js 18+ installieren."
-  exit 1
-fi
-if ! command -v npm >/dev/null 2>&1; then
-  echo "npm nicht gefunden! Bitte vorher Node.js 18+ installieren."
-  exit 1
-fi
+print_warning() {
+    echo -e "${YELLOW}WARNING: $1${NC}"
+}
 
-if ! command -v pm2 >/dev/null 2>&1; then
-  echo "pm2 nicht gefunden. Installiere pm2 global..."
-  # Je nach Systemkonfiguration ist hier 'sudo' erforderlich
-  npm install -g pm2
-fi
+print_error() {
+    echo -e "${RED}ERROR: $1${NC}"
+}
 
+# --- ASCII Art Header ---
+echo -e "${BLUE}"
+cat << "EOF"
+ ____       _   _   _ _____ _____
+|  _ \ __ _| |_| |_(_)_   _|_   _|
+| |_) / _` | __| __| | | |   | |
+|  __/ (_| | |_| |_| | | |   | |
+|_|   \__,_|\__|\__|_| |_|   |_|
 
-echo "[2/4] Installiere Backend-Abhängigkeiten..."
+EOF
+echo -e " Automated Setup Script${NC}"
+echo "--------------------------------"
+
+# --- 1. System Update and Prerequisite Installation ---
+print_info "Updating system packages..."
+sudo apt update && sudo apt upgrade -y
+print_success "System packages updated."
+
+print_info "Installing git, curl, and build-essential..."
+sudo apt install -y git curl build-essential
+print_success "Prerequisites installed."
+
+# --- 2. Node.js Installation (v18) ---
+print_info "Installing Node.js v18..."
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+print_success "Node.js v18 installed."
+
+# Verify Node.js and npm installation
+print_info "Node.js and npm versions:"
+node -v
+npm -v
+
+# --- 3. MariaDB Installation ---
+print_info "Installing MariaDB..."
+sudo apt install -y mariadb-server mariadb-client
+print_success "MariaDB installed."
+
+print_info "Starting and enabling MariaDB..."
+sudo systemctl enable --now mariadb
+sudo systemctl start mariadb
+print_success "MariaDB started."
+
+print_warning "The next step is to secure your MariaDB installation."
+print_warning "Please follow the on-screen prompts. It is recommended to set a root password."
+read -p "Press [Enter] to run 'sudo mysql_secure_installation'..."
+sudo mysql_secure_installation
+
+# --- 4. Clone Project Repository ---
+print_info "Cloning the Paint.IT project from GitHub..."
+git clone https://github.com/N0C2/paintit.git paintit
+cd paintit
+print_success "Project cloned successfully."
+
+# --- 5. Database and User Creation ---
+print_info "Now, let's create the database user."
+read -s -p "Enter a new password for the 'paintituser' database user: " DB_PASSWORD
+echo
+print_info "Creating database and user..."
+sudo mysql -u root -p <<MYSQL_SCRIPT
+CREATE DATABASE paintit CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'paintituser'@'localhost' IDENTIFIED BY '$DB_PASSWORD';
+GRANT ALL PRIVILEGES ON paintit.* TO 'paintituser'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+MYSQL_SCRIPT
+print_success "Database 'paintit' and user 'paintituser' created."
+
+# --- 6. Backend Setup ---
+print_info "Setting up the backend..."
 cd server
 npm install
-cd ..
+print_success "Backend dependencies installed."
 
-echo "[3/4] Setze Frontend-API-URL und installiere Abhängigkeiten..."
-cd client
-cat > .env <<EOF
-VITE_API_URL=http://$PUBLIC_IP:3001/api
+# Create .env file
+print_info "Generating a secure JWT Secret and creating .env file..."
+JWT_SECRET=$(openssl rand -hex 32)
+cat > .env << EOF
+DB_HOST=localhost
+DB_USER=paintituser
+DB_PASSWORD=$DB_PASSWORD
+DB_NAME=paintit
+JWT_SECRET=$JWT_SECRET
 EOF
+print_success ".env file created."
+
+print_info "Running database setup..."
+npm run setup
+print_success "Database tables created."
+
+# --- 7. Frontend Setup ---
+print_info "Setting up the frontend..."
+cd ../client
 npm install
+print_success "Frontend dependencies installed."
+
+print_info "Building the frontend application..."
 npm run build
-cd ..
+print_success "Frontend application built."
 
-echo "[4/4] Starte Backend (Port 3001) und Frontend (Port 5173) mit pm2..."
-# Stoppe eventuell bereits laufende Prozesse mit demselben Namen
-pm2 delete paintit-backend || true
-pm2 delete paintit-frontend || true
-
-pm2 start npm --name "paintit-backend" -- run start --cwd ./server
-pm2 start npm --name "paintit-frontend" -- run preview --cwd ./client
-
-echo "Speichere die Prozessliste, damit sie nach einem Server-Neustart wiederhergestellt werden kann..."
-pm2 save
-
-echo "Fertig! Paint.IT wird von pm2 verwaltet."
-echo "  Backend:  http://$PUBLIC_IP:3001"
-echo "  Frontend: http://$PUBLIC_IP:5173"
-echo ""
-echo "Verwende 'pm2 list' um den Status zu sehen oder 'pm2 logs' für die Logs."
-echo "TIPP: Führe 'pm2 startup' aus und folge den Anweisungen, um die Apps bei einem Server-Reboot automatisch zu starten."
+# --- 8. Starting the Application ---
+echo "--------------------------------"
+print_success "Setup complete!"
+print_info "The project is located in the 'paintit' directory."
+print_info "To start the application for production, run the following commands:"
+echo -e "${YELLOW}cd paintit/server && npm start${NC}"

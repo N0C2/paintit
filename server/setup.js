@@ -70,7 +70,8 @@ async function setupDatabase() {
       CREATE TABLE IF NOT EXISTS orders (
         id INT AUTO_INCREMENT PRIMARY KEY,
         orderNumber VARCHAR(100) NOT NULL UNIQUE,
-        customerName VARCHAR(255) NOT NULL,
+        customerFirstName VARCHAR(128) NOT NULL,
+        customerLastName VARCHAR(128) NOT NULL,
         licensePlate VARCHAR(50),
         status VARCHAR(50) DEFAULT 'offen',
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

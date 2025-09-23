@@ -22,25 +22,26 @@ const port = 3001;
 app.use(cors());
 app.use(express.json());
 
-// --- Serve Frontend Static Files ---
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-app.use(express.static(path.join(__dirname, '../client/dist')));
-
 // API Status Route
 app.get('/api/status', (req, res) => {
     res.json({ setupComplete: isSetupComplete() });
 });
 
-// Register API Routes
+// API Routes - Diese sollten vor den Frontend-Routen stehen
 app.use('/api/setup', setupRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/orders', orderRouter);
 app.use('/api/dropdowns', dropdownRouter);
 app.use('/api/users', userRouter);
 
+// --- Frontend Serving ---
+// 1. Statische Dateien (JS, CSS, Bilder) aus dem 'dist'-Ordner bereitstellen
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use(express.static(path.join(__dirname, '../client/dist')));
+
 // --- Frontend Catch-all Route ---
-// This must be after all API routes
+// 2. Für alle anderen Anfragen die index.html der SPA zurückgeben.
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });

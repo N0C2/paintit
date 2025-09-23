@@ -70,30 +70,7 @@ node -v
 npm -v
 
 # --- 3. MariaDB Installation ---
-read -p "Do you want to install and configure MariaDB? (y/n) " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
-    print_info "Installing MariaDB..."
-    if sudo apt install -y mariadb-server mariadb-client; then
-        print_success "MariaDB installed."
-    else
-        print_error "Failed to install MariaDB."
-        exit 1
-    fi
-
-    print_info "Starting and enabling MariaDB..."
-    sudo systemctl enable --now mariadb
-    sudo systemctl start mariadb
-    print_success "MariaDB started."
-
-    print_warning "The next step is to secure your MariaDB installation."
-    print_warning "Please follow the on-screen prompts. It is recommended to set a root password."
-    read -p "Press [Enter] to run 'sudo mysql_secure_installation'..."
-    sudo mysql_secure_installation
-else
-    print_warning "Skipping MariaDB installation and setup."
-fi
+print_warning "Skipping MariaDB installation. Please ensure a database server is installed and configured manually."
 
 # --- 4. Clone Project Repository ---
 print_info "Cloning the Paint.IT project from GitHub..."
@@ -105,22 +82,6 @@ else
     exit 1
 fi
 
-# --- 5. Database and User Creation ---
-print_info "Now, let's configure the database credentials."
-read -s -p "Enter the password for the 'paintituser' database user: " DB_PASSWORD
-echo
-print_info "Attempting to create database and user (if they don't exist)..."
-sudo mysql -u root -p <<MYSQL_SCRIPT
-CREATE DATABASE IF NOT EXISTS paintit CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER IF NOT EXISTS 'paintituser'@'localhost' IDENTIFIED BY '$DB_PASSWORD';
-GRANT ALL PRIVILEGES ON paintit.* TO 'paintituser'@'localhost';
-FLUSH PRIVILEGES;
-MYSQL_SCRIPT
-
-print_warning "If you saw an error above (e.g., user already exists or access denied), it might be safe to ignore if your database is already configured."
-print_success "Database and user configuration step finished."
-
-
 # --- 6. Backend Setup ---
 print_info "Setting up the backend..."
 cd server
@@ -131,25 +92,8 @@ else
     exit 1
 fi
 
-# Create .env file
-print_info "Generating a secure JWT Secret and creating .env file..."
-JWT_SECRET=$(openssl rand -hex 32)
-cat > .env << EOF
-DB_HOST=localhost
-DB_USER=paintituser
-DB_PASSWORD="$DB_PASSWORD"
-DB_NAME=paintit
-JWT_SECRET=$JWT_SECRET
-EOF
-print_success ".env file created."
-
-print_info "Running database setup..."
-if npm run setup; then
-    print_success "Database tables created."
-else
-    print_error "Failed to create database tables. This might be due to an incorrect password. Please try running the script again."
-    exit 1
-fi
+print_warning "Database-related setup steps (creating .env, running 'npm run setup') have been removed."
+print_warning "You must manually create the 'server/.env' file and run 'npm run setup' in the 'server' directory."
 
 # --- 7. Frontend Setup ---
 print_info "Setting up the frontend..."

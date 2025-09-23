@@ -1,6 +1,5 @@
 import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
-import bcrypt from 'bcrypt';
 
 dotenv.config();
 
@@ -10,8 +9,6 @@ const dbConfig = {
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
 };
-
-const saltRounds = 10;
 
 async function setupDatabase() {
   let connection;
@@ -70,20 +67,77 @@ async function setupDatabase() {
       CREATE TABLE IF NOT EXISTS orders (
         id INT AUTO_INCREMENT PRIMARY KEY,
         orderNumber VARCHAR(100) NOT NULL UNIQUE,
-        customerFirstName VARCHAR(128) NOT NULL,
-        customerLastName VARCHAR(128) NOT NULL,
+        customerFirstName VARCHAR(128),
+        customerLastName VARCHAR(128),
         licensePlate VARCHAR(50),
         status VARCHAR(50) DEFAULT 'offen',
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         completionDate DATE,
         previousCompletionDate TEXT,
         branchId INT,
-        FOREIGN KEY (branchId) REFERENCES branches(id)
+        vin VARCHAR(255),
+        paintNumber VARCHAR(255),
+        additionalOrderInfo TEXT,
+        FOREIGN KEY (branchId) REFERENCES branches(id) ON DELETE SET NULL
       );
     `);
     console.log('- Tabelle "orders" erstellt.');
 
+    // Order Items Table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS order_items (
+        id INT AUTO_INCREMENT PRIMARY KEY, 
+        order_id INT, 
+        part VARCHAR(255), 
+        code VARCHAR(255), 
+        info VARCHAR(255), 
+        additional_info TEXT, 
+        FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+      );
+    `);
+    console.log('- Tabelle "order_items" erstellt.');
+
+    // Dropdown Tables
+    await connection.query(`CREATE TABLE IF NOT EXISTS part (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) UNIQUE NOT NULL)`);
+    console.log('- Tabelle "part" erstellt.');
+    await connection.query(`CREATE TABLE IF NOT EXISTS code (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) UNIQUE NOT NULL)`);
+    console.log('- Tabelle "code" erstellt.');
+    await connection.query(`CREATE TABLE IF NOT EXISTS info (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) UNIQUE NOT NULL)`);
+    console.log('- Tabelle "info" erstellt.');
+    await connection.query(`CREATE TABLE IF NOT EXISTS roles (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) UNIQUE NOT NULL)`);
+    console.log('- Tabelle "roles" erstellt.');
+
     console.log('Tabellen erfolgreich erstellt oder bereits vorhanden.');
+
+    console.log('Füge Seed-Daten für Dropdowns hinzu (falls nicht vorhanden)...');
+    
+    // Using INSERT IGNORE to prevent errors if data already exists
+    const branches = ['Heufeld', 'Rosenheim', 'München'];
+    for (const name of branches) {
+        await connection.query('INSERT IGNORE INTO branches (name) VALUES (?)', [name]);
+    }
+
+    const parts = ['Kotflügel VL.', 'Stoßstange vorne', 'Türe hinten rechts'];
+    for (const name of parts) {
+        await connection.query('INSERT IGNORE INTO part (name) VALUES (?)', [name]);
+    }
+
+    const codes = ['-S2', '-S3', '-L1'];
+    for (const name of codes) {
+        await connection.query('INSERT IGNORE INTO code (name) VALUES (?)', [name]);
+    }
+
+    const infos = ['Zusatzinfo', 'Kratzer', 'Delle'];
+    for (const name of infos) {
+        await connection.query('INSERT IGNORE INTO info (name) VALUES (?)', [name]);
+    }
+    
+    const roles = ['Admin', 'Werkstattleiter', 'Lackierer', 'Buchhaltung', 'Mechaniker'];
+    for (const name of roles) {
+        await connection.query('INSERT IGNORE INTO roles (name) VALUES (?)', [name]);
+    }
+    
+    console.log('Seed-Daten hinzugefügt.');
 
   } catch (error) {
     console.error('Fehler beim Datenbank-Setup:', error);

@@ -21,9 +21,15 @@ const EditOrderForm: React.FC<EditOrderFormProps> = ({ token, API_URL }) => {
         try {
             const response = await fetch(`${API_URL}/orders/${orderId}`, { headers: { 'Authorization': `Bearer ${token}` } });
             if (!response.ok) throw new Error('Could not fetch order data.');
-            const data = await response.json();
-            setFormData(data.data);
-            setItems(data.data.items || [{ part: '', code: '', info: '', additional_info: '' }]);
+            const responsePayload = await response.json();
+            const orderData = responsePayload.data;
+
+            // Format the date to YYYY-MM-DD for the date input
+            if (orderData.completionDate) {
+                orderData.completionDate = new Date(orderData.completionDate).toISOString().split('T')[0];
+            }
+            setFormData(orderData);
+            setItems(orderData.items || [{ part: '', code: '', info: '', additional_info: '' }]);
         } catch (err: any) {
             setError(err.message);
         } finally {

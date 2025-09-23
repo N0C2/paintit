@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import '../App.css';
 
 interface OrderListProps { token: string | null; API_URL: string; role?: string | null; }
-interface Order { id: number; customerFirstName: string; customerLastName: string; orderNumber: string; status: string; completionDate: string; branch: string; previousCompletionDate?: string; }
+interface Order { id: number; customerFirstName: string; customerLastName: string; orderNumber: string; status: string; completionDate: string; branch: string; }
 
 // Confirmation Modal Component
 const ConfirmationModal: React.FC<{ message: string; onConfirm: () => void; onCancel: () => void; }> = ({ message, onConfirm, onCancel }) => {
@@ -22,6 +22,7 @@ const ConfirmationModal: React.FC<{ message: string; onConfirm: () => void; onCa
 };
 
 const OrderList: React.FC<OrderListProps> = ({ token, API_URL, role }) => {
+    const navigate = useNavigate();
     const [completeLoading, setCompleteLoading] = useState<number | null>(null);
     const handleComplete = async (orderId: number) => {
         setCompleteLoading(orderId);
@@ -40,37 +41,6 @@ const OrderList: React.FC<OrderListProps> = ({ token, API_URL, role }) => {
         }
     };
     const [orders, setOrders] = useState<Order[]>([]);
-    const [editingDateId, setEditingDateId] = useState<number | null>(null);
-    const [newCompletionDate, setNewCompletionDate] = useState<string>('');
-    // previousCompletionDate kommt jetzt direkt aus dem Backend
-    const handleDateEdit = (order: Order) => {
-        setEditingDateId(order.id);
-        setNewCompletionDate(order.completionDate ? order.completionDate.slice(0,10) : '');
-    };
-
-    const handleDateSave = async (order: Order) => {
-        if (!newCompletionDate || newCompletionDate === order.completionDate?.slice(0,10)) {
-            setEditingDateId(null);
-            return;
-        }
-        try {
-            const response = await fetch(`${API_URL}/orders/${order.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ ...order, completionDate: newCompletionDate })
-            });
-            if (!response.ok) throw new Error('Fehler beim Speichern des Datums');
-            setOrders(orders => orders.map(o => o.id === order.id ? { ...o, completionDate: newCompletionDate } : o));
-            setOldCompletionDates(info => ({ ...info, [order.id]: order.completionDate }));
-        } catch (err: any) {
-            setError(err.message);
-        } finally {
-            setEditingDateId(null);
-        }
-    };
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -152,37 +122,16 @@ const OrderList: React.FC<OrderListProps> = ({ token, API_URL, role }) => {
                     </thead>
                     <tbody>
                         {filteredOrders.length > 0 ? filteredOrders.map((order) => (
-                            <tr key={order.id} style={{ borderBottom: '1px solid #dee2e6' }}>
+                            <tr key={order.id} className="clickable-row" onClick={() => navigate(`/orders/${order.id}`)} style={{ borderBottom: '1px solid #dee2e6' }}>
                                 <td style={{ padding: '0.75rem' }}>{order.id}</td>
                                 <td style={{ padding: '0.75rem' }}>{order.customerFirstName} {order.customerLastName}</td>
                                 <td style={{ padding: '0.75rem' }}>{order.orderNumber}</td>
                                 <td style={{ padding: '0.75rem' }}>{order.status}</td>
                                 <td style={{ padding: '0.75rem' }}>
-                                    {editingDateId === order.id ? (
-                                        <>
-                                            <input
-                                                type="date"
-                                                value={newCompletionDate}
-                                                onChange={e => setNewCompletionDate(e.target.value)}
-                                                style={{marginRight: '0.5rem'}}
-                                            />
-                                            <button className="primary-button" style={{padding: '0.2rem 0.6rem', fontSize: '0.9em'}} onClick={() => handleDateSave(order)}>Speichern</button>
-                                            <button className="secondary-button" style={{padding: '0.2rem 0.6rem', fontSize: '0.9em', marginLeft: '0.3rem'}} onClick={() => setEditingDateId(null)}>Abbrechen</button>
-                                        </>
-                                    ) : (
-                                        <>
-                                            {order.completionDate ? new Date(order.completionDate).toLocaleDateString('de-DE') : '-'}
-                                            <button className="secondary-button" style={{marginLeft: '0.5rem', padding: '0.2rem 0.6rem', fontSize: '0.9em'}} onClick={() => handleDateEdit(order)}>Bearbeiten</button>
-                                            {order.previousCompletionDate && (
-                                                <div style={{fontSize: '0.85em', color: '#dc3545', marginTop: '0.2rem'}}>
-                                                    Vorher: {order.previousCompletionDate ? new Date(order.previousCompletionDate).toLocaleDateString('de-DE') : '-'}
-                                                </div>
-                                            )}
-                                        </>
-                                    )}
+                                    {order.completionDate ? new Date(order.completionDate).toLocaleDateString('de-DE') : '-'}
                                 </td>
-                                <td style={{ padding: '0.75rem', display: 'flex', gap: '0.5rem' }}>
-                                    <Link to={`/orders/${order.id}/edit`} className="secondary-button" style={{padding: '0.4rem 0.8rem', textDecoration: 'none'}}>Bearbeiten</Link>
+                                <td style={{ padding: '0.75rem', display: 'flex', gap: '0.5rem' }} onClick={(e) => e.stopPropagation()}>
+                                    <Link to={`/orders/${order.id}`} className="secondary-button" style={{padding: '0.4rem 0.8rem', textDecoration: 'none'}}>Ansehen</Link>
                                     <button onClick={() => setShowDeleteModal(order.id)} className="danger-button" style={{padding: '0.4rem 0.8rem'}}>Löschen</button>
                                     {role === 'admin' && order.status !== 'abgeschlossen' && (
                                         <button

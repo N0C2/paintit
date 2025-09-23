@@ -35,11 +35,25 @@ router.get('/completed', async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const db = getDbPool();
-        const [orders] = await db.query('SELECT * FROM orders WHERE id = ?', [req.params.id]);
+        // Use a LEFT JOIN to get the branch name directly
+        const [orders] = await db.query(`
+            SELECT o.*, b.name as branchName 
+            FROM orders o
+            LEFT JOIN branches b ON o.branchId = b.id
+            WHERE o.id = ?
+        `, [req.params.id]);
+
         if (!orders || orders.length === 0) {
             return res.status(404).json({ message: 'Order not found.' });
         }
-        res.json({ message: 'success', data: orders[0] });
+
+        const order = orders[0];
+
+        // Fetch associated items
+        const [items] = await db.query('SELECT * FROM order_items WHERE order_id = ?', [req.params.id]);
+        order.items = items || [];
+
+        res.json({ message: 'success', data: order });
     } catch (err) {
         console.log('[ERROR] Failed to retrieve order:', err);
         res.status(500).json({ message: 'Failed to retrieve order.' });

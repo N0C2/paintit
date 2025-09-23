@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authenticatedFetch } from './api';
 import '../App.css';
 
 interface NewOrderFormProps { token: string | null; API_URL: string; }
@@ -16,7 +17,7 @@ const NewOrderForm: React.FC<NewOrderFormProps> = ({ token, API_URL }) => {
 
     useEffect(() => {
         const fetchDropdownData = async (type: string) => {
-            const response = await fetch(`${API_URL}/dropdowns/${type}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await authenticatedFetch(`${API_URL}/dropdowns/${type}`);
             if (!response.ok) throw new Error(`Could not fetch ${type}`);
             return await response.json();
         };
@@ -53,9 +54,9 @@ const NewOrderForm: React.FC<NewOrderFormProps> = ({ token, API_URL }) => {
         e.preventDefault();
         setError(''); setSuccess(''); setLoading(true);
         try {
-            const response = await fetch(`${API_URL}/orders`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ ...formData, items })
+            const response = await authenticatedFetch(`${API_URL}/orders`, {
+                method: 'POST',
+                body: JSON.stringify({ ...formData, items }),
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Failed to create order.');

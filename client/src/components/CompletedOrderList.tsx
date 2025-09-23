@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { authenticatedFetch } from './api';
 import '../App.css';
 
 interface CompletedOrderListProps { token: string | null; API_URL: string; role?: string | null; }
@@ -14,7 +15,7 @@ const CompletedOrderList: React.FC<CompletedOrderListProps> = ({ token, API_URL,
     useEffect(() => {
         const fetchOrders = async () => {
             try {
-                const response = await fetch(`${API_URL}/orders/completed`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const response = await authenticatedFetch(`${API_URL}/orders/completed`);
                 if (!response.ok) throw new Error('Fehler beim Laden der Aufträge');
                 const data = await response.json();
                 setOrders(data.data);
@@ -69,7 +70,7 @@ const CompletedOrderList: React.FC<CompletedOrderListProps> = ({ token, API_URL,
                                 <td style={{ padding: '0.75rem' }}>{order.completionDate ? new Date(order.completionDate).toLocaleDateString('de-DE') : '-'}</td>
                                 {role === 'admin' && (
                                     <td style={{ padding: '0.75rem' }}>
-                                        <Link to={`/orders/${order.id}/edit`} className="secondary-button" style={{padding: '0.4rem 0.8rem', textDecoration: 'none'}}>Bearbeiten</Link>
+                                        <Link to={`/orders/${order.id}`} className="primary-button" style={{padding: '0.4rem 0.8rem', textDecoration: 'none'}}>Ansehen</Link>
                                     </td>
                                 )}
                             </tr>

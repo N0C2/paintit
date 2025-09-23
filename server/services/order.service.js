@@ -2,24 +2,50 @@ import { getDbPool } from '../database.js';
 
 export const getAllOrders = async () => {
     const db = getDbPool();
-    const [orders] = await db.query("SELECT * FROM orders ORDER BY id DESC");
+    const [orders] = await db.query(`
+        SELECT o.*, b.name as branchName 
+        FROM orders o
+        LEFT JOIN branch b ON o.branch = b.name
+        WHERE o.status != 'abgeschlossen'
+        ORDER BY o.id DESC
+    `);
+    return orders;
+};
+
+export const getCompletedOrders = async () => {
+    const db = getDbPool();
+    const [orders] = await db.query(`
+        SELECT o.*, b.name as branchName 
+        FROM orders o
+        LEFT JOIN branch b ON o.branch = b.name
+        WHERE o.status = 'abgeschlossen'
+        ORDER BY o.id DESC
+    `);
     return orders;
 };
 
 export const getOrderById = async (id) => {
     const db = getDbPool();
-    const [orders] = await db.query("SELECT * FROM orders WHERE id = ?", [id]);
+    const [orders] = await db.query(`
+        SELECT o.*, b.name as branchName
+        FROM orders o
+        LEFT JOIN branch b ON o.branch = b.name
+        WHERE o.id = ?
+    `, [id]);
+
     if (orders.length === 0) return null;
 
-    const [items] = await db.query("SELECT part, code, info, additional_info FROM order_items WHERE order_id = ?", [id]);
-    
-    // Format completionDate to YYYY-MM-DD for the input[type=date]
     const order = orders[0];
+
+    const [items] = await db.query("SELECT * FROM order_items WHERE order_id = ?", [id]);
+    order.items = items || [];
+
+    // Format completionDate to YYYY-MM-DD for the input[type=date]
     if (order.completionDate) {
         order.completionDate = new Date(order.completionDate).toISOString().split('T')[0];
     }
     
-    return { ...order, items };
+    return order;
 };
 
 export const createOrder = async (orderData) => {
@@ -59,17 +85,15 @@ export const updateOrder = async (id, orderData) => {
         await connection.beginTransaction();
         const { customerFirstName, customerLastName, completionDate, vin, orderNumber, paintNumber, branch, additionalOrderInfo, items } = orderData;
 
-        // Check if order exists
         const [orderExists] = await connection.query("SELECT id FROM orders WHERE id = ?", [id]);
         if (orderExists.length === 0) {
             await connection.rollback();
-            return null; // Not found
+            return null;
         }
-        
+
         const orderSql = `UPDATE orders SET customerFirstName = ?, customerLastName = ?, completionDate = ?, vin = ?, orderNumber = ?, paintNumber = ?, branch = ?, additionalOrderInfo = ? WHERE id = ?`;
         await connection.execute(orderSql, [customerFirstName, customerLastName, completionDate || null, vin, orderNumber, paintNumber, branch, additionalOrderInfo, id]);
         
-        // Easiest way to handle items is to delete old ones and insert new ones
         await connection.execute('DELETE FROM order_items WHERE order_id = ?', [id]);
 
         const itemSql = `INSERT INTO order_items (order_id, part, code, info, additional_info) VALUES (?, ?, ?, ?, ?)`;
@@ -91,9 +115,14 @@ export const updateOrder = async (id, orderData) => {
     }
 };
 
+export const completeOrder = async (id) => {
+    const db = getDbPool();
+    const [result] = await db.query("UPDATE orders SET status = 'abgeschlossen' WHERE id = ?", [id]);
+    return result.affectedRows > 0;
+};
+
 export const deleteOrder = async (id) => {
     const db = getDbPool();
-    // Transaction not strictly necessary here since ON DELETE CASCADE handles items, but good practice.
     const connection = await db.getConnection();
     try {
         await connection.beginTransaction();

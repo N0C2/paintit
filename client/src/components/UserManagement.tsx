@@ -1,24 +1,6 @@
-  const deleteUser = async (id: number) => {
-    if (!window.confirm('Benutzer wirklich löschen?')) return;
-    setLoading(true);
-    setError('');
-    setSuccess('');
-    try {
-      const res = await fetch(`${API_URL}/users/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error('Fehler beim Löschen');
-      setSuccess('Benutzer gelöscht!');
-      fetchUsers();
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { authenticatedFetch } from './api';
 
 interface User {
   id: number;
@@ -43,27 +25,23 @@ const UserManagement: React.FC<UserManagementProps> = ({ token, API_URL }) => {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const fetchUsers = async () => {
+  const fetchUsers = React.useCallback(async () => {
     setError('');
     try {
-      const res = await fetch(`${API_URL}/users/all`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await authenticatedFetch(`${API_URL}/users/all`);
       if (!res.ok) throw new Error('Fehler beim Laden der Benutzer');
       setUsers(await res.json());
     } catch (err: any) {
       setError(err.message);
     }
-  };
+  }, [API_URL]);
 
-  useEffect(() => { fetchUsers(); }, [API_URL, token]);
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
   useEffect(() => {
     // Lade alle Filialen für das Multi-Select
     const fetchBranches = async () => {
       try {
-        const res = await fetch(`${API_URL}/dropdowns/branch`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await authenticatedFetch(`${API_URL}/dropdowns/branch`);
         if (!res.ok) throw new Error('Fehler beim Laden der Filialen');
         setBranchesList(await res.json());
       } catch {
@@ -71,7 +49,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ token, API_URL }) => {
       }
     };
     fetchBranches();
-  }, [API_URL, token]);
+  }, [API_URL]);
 
   const startEdit = (user: User) => {
     setEditId(user.id);
@@ -94,12 +72,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ token, API_URL }) => {
     setError('');
     setSuccess('');
     try {
-      const res = await fetch(`${API_URL}/users/${editId}`, {
+      const res = await authenticatedFetch(`${API_URL}/users/${editId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
         body: JSON.stringify(editData)
       });
       if (!res.ok) throw new Error('Fehler beim Speichern');
@@ -114,9 +88,31 @@ const UserManagement: React.FC<UserManagementProps> = ({ token, API_URL }) => {
     }
   };
 
+  const deleteUser = async (id: number) => {
+    if (!window.confirm('Benutzer wirklich löschen?')) return;
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await authenticatedFetch(`${API_URL}/users/${id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Fehler beim Löschen');
+      setSuccess('Benutzer gelöscht!');
+      fetchUsers();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="form-container">
-      <h2>Benutzerverwaltung</h2>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="mb-0">Benutzerverwaltung</h2>
+        <Link to="/users/new" className="btn btn-primary">Neuen Benutzer anlegen</Link>
+      </div>
       {error && <div className="error">{error}</div>}
       {success && <div className="success">{success}</div>}
       <div className="user-table-wrapper">
@@ -200,3 +196,4 @@ const UserManagement: React.FC<UserManagementProps> = ({ token, API_URL }) => {
 };
 
 export default UserManagement;
+

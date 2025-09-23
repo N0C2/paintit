@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { authenticatedFetch } from './api';
 import '../App.css';
 
 interface OrderListProps { token: string | null; API_URL: string; role?: string | null; }
@@ -28,9 +29,8 @@ const OrderList: React.FC<OrderListProps> = ({ token, API_URL, role }) => {
         setCompleteLoading(orderId);
         setError('');
         try {
-            const response = await fetch(`${API_URL}/orders/${orderId}/complete`, {
+            const response = await authenticatedFetch(`${API_URL}/orders/${orderId}/complete`, {
                 method: 'PATCH',
-                headers: { 'Authorization': `Bearer ${token}` },
             });
             if (!response.ok) throw new Error('Abschließen fehlgeschlagen.');
             setOrders(orders => orders.map(o => o.id === orderId ? { ...o, status: 'abgeschlossen' } : o));
@@ -49,7 +49,7 @@ const OrderList: React.FC<OrderListProps> = ({ token, API_URL, role }) => {
     useEffect(() => {
         const fetchOrders = async () => {
             try {
-                const response = await fetch(`${API_URL}/orders`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const response = await authenticatedFetch(`${API_URL}/orders`);
                 if (!response.ok) throw new Error('Fehler beim Laden der Aufträge');
                 const data = await response.json();
                 setOrders(data.data);
@@ -61,9 +61,8 @@ const OrderList: React.FC<OrderListProps> = ({ token, API_URL, role }) => {
 
     const handleDelete = async (orderId: number) => {
         try {
-            const response = await fetch(`${API_URL}/orders/${orderId}`, {
+            const response = await authenticatedFetch(`${API_URL}/orders/${orderId}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` },
             });
             if (!response.ok) throw new Error('Löschen fehlgeschlagen.');
             setOrders(orders.filter(order => order.id !== orderId));

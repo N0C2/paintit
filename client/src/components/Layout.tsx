@@ -18,7 +18,7 @@ const Layout: React.FC<LayoutProps> = ({ onLogout, role }) => {
                         <li><NavLink to="/orders" end>Auftragsliste</NavLink></li>
                         <li><NavLink to="/orders/completed" end>Abgeschlossene Aufträge</NavLink></li>
                         {role === 'admin' && <>
-                            <li><NavLink to="/users/new">Benutzer anlegen</NavLink></li>
+                            
                             <li><NavLink to="/users/manage">Benutzer verwalten</NavLink></li>
                         </>}
                     </ul>

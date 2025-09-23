@@ -6,7 +6,10 @@ export const authenticateToken = (req, res, next) => {
     if (token == null) return res.sendStatus(401); // Unauthorized
 
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-        if (err) return res.sendStatus(403); // Forbidden
+        if (err) {
+            console.error('JWT Verification Error:', err);
+            return res.sendStatus(403); // Forbidden
+        }
         req.user = user;
         next();
     });

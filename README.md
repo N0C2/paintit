@@ -1,76 +1,65 @@
 # Paint.IT
 
 ## Projektüberblick
-Paint.IT ist ein Fullstack-System zur Verwaltung von Werkstattaufträgen, Benutzern und Filialen.
 
-**Features:**
-- Benutzerverwaltung mit Rollen (Admin, Werkstatt, Buchhaltung, etc.)
-- Multi-Filial-Unterstützung
-- Auftragsmanagement: Anlegen, Bearbeiten, Löschen, Abschließen
-- Abgeschlossene Aufträge werden separat gelistet
-- Fertigstellungsdatum kann bearbeitet werden, alte Werte werden dokumentiert
-- Filter- und Suchfunktionen für Aufträge
-- Frontend: React + TypeScript, Backend: Node.js (Express, ES Modules), Datenbank: MariaDB/MySQL
-- Authentifizierung via JWT
+Paint.IT ist ein Full-Stack-System zur einfachen Verwaltung von Werkstattaufträgen, Benutzern und Filialen. Es wurde entwickelt, um den Workflow in Lackier- und Karosseriewerkstätten zu digitalisieren und zu optimieren.
 
-## Setup-Anleitung
+### Features
 
-### Voraussetzungen
-- Node.js (empfohlen: v18+)
-- npm
-- MariaDB oder MySQL-Server (empfohlen: MariaDB 10.5+)
-- Git (optional)
+- **Benutzerverwaltung:** Anlegen, Bearbeiten und Löschen von Benutzern mit unterschiedlichen Rollen (Admin, Werkstattleiter, Lackierer etc.).
+- **Auftragsmanagement:** Erfassen, Aktualisieren und Verfolgen von Aufträgen mit detaillierten Informationen wie Kundendaten, Fahrzeug-VIN, Lacknummer und zugewiesener Filiale.
+- **Multi-Filial-Fähigkeit:** Verwaltung mehrerer Standorte.
+- **Status-Tracking:** Aufträge durchlaufen verschiedene Status wie "offen", "in Bearbeitung" und "abgeschlossen".
+- **Historie:** Abgeschlossene Aufträge werden in einer separaten Ansicht archiviert.
+- **Suche und Filter:** Schnelles Finden von Aufträgen und Benutzern.
+- **Web-basiertes Setup:** Eine einfache, geführte Installation direkt im Browser.
 
-### Schritt-für-Schritt
-1. **Repository klonen**
+## Technologien
+
+- **Frontend:** React mit TypeScript
+- **Backend:** Node.js mit Express
+- **Datenbank:** MySQL / MariaDB
+- **Authentifizierung:** JSON Web Tokens (JWT)
+
+## Voraussetzungen
+
+- Node.js (v18 oder neuer empfohlen)
+- npm (wird mit Node.js installiert)
+- Ein laufender MySQL- oder MariaDB-Server
+
+## Installation und Start
+
+Das Projekt verfügt über ein einfaches Installationsskript, das sowohl den Server als auch den Client einrichtet und startet.
+
+1. **Abhängigkeiten installieren:**
+   Führen Sie das Skript `install-and-start.sh` (für Linux/macOS) oder `install-and-start.bat` (für Windows) aus. Wenn Sie die Skripte nicht verwenden können, führen Sie die folgenden Befehle manuell aus:
+   ```bash
+   # Server-Abhängigkeiten installieren
+   cd server
+   npm install
+
+   # Client-Abhängigkeiten installieren
+   cd ../client
+   npm install
    ```
-   git clone <REPO_URL> paintit
-   ```
-2. **Datenbank anlegen**
-   ```sql
-   CREATE DATABASE paintit CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   ```
-3. **Backend konfigurieren**
-   - Ins `server`-Verzeichnis wechseln
-   - `npm install`
-   - `.env` Datei anlegen:
-     ```
-     DB_HOST=localhost
-     DB_USER=deinuser
-     DB_PASSWORD=deinpasswort
-     DB_NAME=paintit
-     JWT_SECRET=dein_geheimes_token
-     ```
-   - Setup ausführen:
-     ```
-     npm run setup
-     ```
-   - Server starten:
-     ```
-     npm start
-     ```
-4. **Frontend konfigurieren**
-   - Ins `client`-Verzeichnis wechseln
-   - `npm install`
-   - Frontend starten:
-     ```
-     npm run dev
-     ```
-5. **Projekt im Browser öffnen**
-   - Frontend: http://localhost:5173
-   - Backend-API: http://localhost:3001
 
-### Wichtige Abhängigkeiten
-- **Server:** express, cors, dotenv, mysql2, bcrypt, jsonwebtoken, crypto, fs/promises
-- **Client:** react, react-dom, react-router-dom, typescript, vite
+2. **Anwendung starten:**
+   Nach der Installation der Abhängigkeiten können Sie die Anwendung mit den gleichen Skripten (`install-and-start.sh` / `install-and-start.bat`) starten oder die Befehle manuell ausführen:
+   ```bash
+   # Server starten (im Hauptverzeichnis ausführen)
+   cd server
+   npm start
 
-### Hinweise
-- Für Produktivbetrieb sichere Passwörter und Umgebungsvariablen verwenden!
-- MariaDB/MySQL-User benötigt Rechte zum Anlegen von Tabellen und Datenbanken.
-- Frontend und Backend können auf unterschiedlichen Servern laufen, API-URL ggf. anpassen.
+   # Client starten (in einem neuen Terminal im Hauptverzeichnis ausführen)
+   cd client
+   npm run dev
+   ```
+
+3. **Web-basiertes Setup:**
+   - Öffnen Sie Ihren Browser und navigieren Sie zu der Adresse, die im Client-Terminal angezeigt wird (standardmäßig `http://localhost:5173`).
+   - Sie werden durch einen Setup-Prozess geführt, in dem Sie die Datenbankverbindung und den ersten Admin-Benutzer anlegen.
+   - Folgen Sie den Anweisungen auf dem Bildschirm, um die Installation abzuschließen.
 
 ## Patchlog
-Siehe PATCHLOG.md für die letzten Änderungen.
 
-## Kontakt & Support
-Bei Fragen oder Problemen: antimo.cimenes@gmail.com oder im Projekt-Repository ein Issue eröffnen.
+Eine detaillierte Liste der Änderungen finden Sie in der Datei [PATCHLOG.md](PATCHLOG.md).

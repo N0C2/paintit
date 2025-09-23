@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { authenticatedFetch } from './api';
 
 interface RegisterUserFormProps {
   token: string;
@@ -10,12 +11,12 @@ const RegisterUserForm: React.FC<RegisterUserFormProps> = ({ token, API_URL }) =
     firstName: '',
     lastName: '',
     branch: [] as string[],
-    status: '',
+    role: '',
     email: '',
     password: ''
   });
   const [branches, setBranches] = useState<string[]>([]);
-  const [statuses, setStatuses] = useState<string[]>([]);
+  const [roles, setRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
@@ -24,13 +25,11 @@ const RegisterUserForm: React.FC<RegisterUserFormProps> = ({ token, API_URL }) =
     const fetchDropdowns = async () => {
       setError('');
       try {
-        const res = await fetch(`${API_URL}/users/dropdowns`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await authenticatedFetch(`${API_URL}/users/dropdowns`);
         if (!res.ok) throw new Error('Dropdowns konnten nicht geladen werden');
         const data = await res.json();
         setBranches(data.branches);
-        setStatuses(data.statuses);
+        setRoles(data.roles);
       } catch (err: any) {
         setError(err.message);
       }
@@ -53,12 +52,8 @@ const RegisterUserForm: React.FC<RegisterUserFormProps> = ({ token, API_URL }) =
     setError('');
     setSuccess('');
     try {
-      const res = await fetch(`${API_URL}/users`, {
+      const res = await authenticatedFetch(`${API_URL}/users`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
         body: JSON.stringify({ ...form, branch: form.branch })
       });
       if (!res.ok) {
@@ -66,7 +61,7 @@ const RegisterUserForm: React.FC<RegisterUserFormProps> = ({ token, API_URL }) =
         throw new Error(data.message || 'Fehler beim Anlegen des Benutzers');
       }
       setSuccess('Benutzer erfolgreich angelegt!');
-      setForm({ firstName: '', lastName: '', branch: [], status: '', email: '', password: '' });
+      setForm({ firstName: '', lastName: '', branch: [], role: '', email: '', password: '' });
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -96,10 +91,10 @@ const RegisterUserForm: React.FC<RegisterUserFormProps> = ({ token, API_URL }) =
           <div style={{fontSize: '0.85em', color: '#888', marginTop: 2}}>Mehrfachauswahl möglich</div>
         </div>
         <div className="form-group">
-          <label>Status</label>
-          <select name="status" value={form.status} onChange={handleChange} required>
+          <label>Rolle</label>
+          <select name="role" value={form.role} onChange={handleChange} required>
             <option value="">Bitte wählen</option>
-            {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+            {roles.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
         <div className="form-group">

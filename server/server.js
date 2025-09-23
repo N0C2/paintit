@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import helmet from 'helmet';
 import { getDbPool, isSetupComplete } from './database.js';
 
 // Import routes
@@ -18,8 +19,13 @@ dotenv.config();
 const app = express();
 const port = 3001;
 
-// Core Middleware
-app.use(cors());
+// Security and Core Middleware
+app.use(helmet());
+const corsOptions = {
+    origin: process.env.NODE_ENV === 'production' ? process.env.CORS_ORIGIN : '*',
+    optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // API Status Route
@@ -27,7 +33,7 @@ app.get('/api/status', (req, res) => {
     res.json({ setupComplete: isSetupComplete() });
 });
 
-// API Routes - Diese sollten vor den Frontend-Routen stehen
+// API Routes
 app.use('/api/setup', setupRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/orders', orderRouter);
@@ -35,15 +41,18 @@ app.use('/api/dropdowns', dropdownRouter);
 app.use('/api/users', userRouter);
 
 // --- Frontend Serving ---
-// 1. Statische Dateien (JS, CSS, Bilder) aus dem 'dist'-Ordner bereitstellen
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 app.use(express.static(path.join(__dirname, '../client/dist')));
 
-// --- Frontend Catch-all Route ---
-// 2. Für alle anderen Anfragen die index.html der SPA zurückgeben.
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send({ message: 'Something broke!', error: err.message });
 });
 
 // Start server

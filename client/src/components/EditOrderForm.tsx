@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { authenticatedFetch } from './api';
 import '../App.css';
 
 interface EditOrderFormProps { token: string | null; API_URL: string; }
@@ -19,7 +20,7 @@ const EditOrderForm: React.FC<EditOrderFormProps> = ({ token, API_URL }) => {
 
     const fetchOrderData = useCallback(async () => {
         try {
-            const response = await fetch(`${API_URL}/orders/${orderId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await authenticatedFetch(`${API_URL}/orders/${orderId}`);
             if (!response.ok) throw new Error('Could not fetch order data.');
             const responsePayload = await response.json();
             const orderData = responsePayload.data;
@@ -39,7 +40,7 @@ const EditOrderForm: React.FC<EditOrderFormProps> = ({ token, API_URL }) => {
 
     useEffect(() => {
         const fetchDropdownData = async (type: string) => {
-            const response = await fetch(`${API_URL}/dropdowns/${type}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await authenticatedFetch(`${API_URL}/dropdowns/${type}`);
             if (!response.ok) throw new Error(`Could not fetch ${type}`);
             return await response.json();
         };
@@ -66,9 +67,9 @@ const EditOrderForm: React.FC<EditOrderFormProps> = ({ token, API_URL }) => {
         e.preventDefault();
         setError(''); setSuccess(''); setLoading(true);
         try {
-            const response = await fetch(`${API_URL}/orders/${orderId}`, {
-                method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ ...formData, items })
+            const response = await authenticatedFetch(`${API_URL}/orders/${orderId}`, {
+                method: 'PUT',
+                body: JSON.stringify({ ...formData, items }),
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Failed to update order.');

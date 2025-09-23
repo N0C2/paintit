@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 // Suppress React Router v7 future flag warnings (Vite/React)
 if (typeof window !== 'undefined' && import.meta.env && import.meta.env.DEV) {
@@ -24,6 +24,7 @@ import EditOrderForm from './components/EditOrderForm';
 import RegisterUserForm from './components/RegisterUserForm';
 import UserManagement from './components/UserManagement';
 import CompletedOrderList from './components/CompletedOrderList';
+import { setOnAuthFailure } from './components/api';
 
 const App: React.FC = () => {
     const [loading, setLoading] = useState(true);
@@ -32,6 +33,12 @@ const App: React.FC = () => {
     const [role, setRole] = useState<string | null>(null);
     // API-URL über Umgebungsvariable (VITE_API_URL) konfigurierbar, Fallback auf relativen Pfad
     const API_URL = import.meta.env.VITE_API_URL || '/api';
+
+    const handleLogout = useCallback(() => {
+        localStorage.removeItem('authToken');
+        setToken(null);
+        setRole(null);
+    }, []);
 
     useEffect(() => {
         const checkStatusAndToken = async () => {
@@ -53,8 +60,9 @@ const App: React.FC = () => {
                 setLoading(false);
             }
         };
+        setOnAuthFailure(handleLogout);
         checkStatusAndToken();
-    }, []);
+    }, [handleLogout]);
 
     const handleLoginSuccess = (newToken: string) => {
         localStorage.setItem('authToken', newToken);
@@ -62,12 +70,6 @@ const App: React.FC = () => {
         // Rolle aus JWT extrahieren
         const payload = JSON.parse(atob(newToken.split('.')[1]));
         setRole(payload.role || null);
-    };
-
-    const handleLogout = () => {
-        localStorage.removeItem('authToken');
-        setToken(null);
-        setRole(null);
     };
 
     if (loading) return <div className="login-container"><h1>Laden...</h1></div>;

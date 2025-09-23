@@ -1,122 +1,88 @@
-
 import express from 'express';
 import { authenticateToken, isAdmin } from '../middleware/auth.middleware.js';
 import { orderValidationRules, validate } from '../utils/validators.js';
 import * as OrderService from '../services/order.service.js';
-import { getDbPool } from '../database.js';
 
 const router = express.Router();
 
-// GET all orders
-router.get('/', async (req, res) => {
+// GET all non-completed orders
+router.get('/', authenticateToken, async (req, res, next) => {
     try {
-        const db = getDbPool();
-        const [orders] = await db.query('SELECT * FROM orders ORDER BY id DESC');
+        const orders = await OrderService.getAllOrders();
         res.json({ message: 'success', data: orders });
     } catch (err) {
         console.log('[ERROR] Failed to retrieve orders:', err);
-        res.status(500).json({ message: 'Failed to retrieve orders.' });
+        next(err); // Pass error to global error handler
     }
 });
 
 // GET only completed orders
-router.get('/completed', async (req, res) => {
+router.get('/completed', authenticateToken, async (req, res, next) => {
     try {
-        const db = getDbPool();
-        const [orders] = await db.query("SELECT * FROM orders WHERE status = 'abgeschlossen' ORDER BY id DESC");
+        const orders = await OrderService.getCompletedOrders();
         res.json({ message: "success", data: orders });
     } catch (err) {
         console.log("[ERROR] Failed to retrieve completed orders:", err);
-        res.status(500).json({ message: "Failed to retrieve completed orders." });
+        next(err);
     }
 });
 
 // GET single order by id
-router.get('/:id', async (req, res) => {
+router.get('/:id', authenticateToken, async (req, res, next) => {
     try {
-        const db = getDbPool();
-        // Use a LEFT JOIN to get the branch name directly
-        const [orders] = await db.query(`
-            SELECT o.*, b.name as branchName
-            FROM orders o
-            LEFT JOIN branch b ON o.branchId = b.id
-            WHERE o.id = ?
-        `, [req.params.id]);
-
-        if (!orders || orders.length === 0) {
+        const order = await OrderService.getOrderById(req.params.id);
+        if (!order) {
             return res.status(404).json({ message: 'Order not found.' });
         }
-
-        const order = orders[0];
-
-        // Fetch associated items
-        const [items] = await db.query('SELECT * FROM order_items WHERE order_id = ?', [req.params.id]);
-        order.items = items || [];
-
         res.json({ message: 'success', data: order });
     } catch (err) {
         console.log('[ERROR] Failed to retrieve order:', err);
-        res.status(500).json({ message: 'Failed to retrieve order.' });
+        next(err);
     }
 });
 
-// PATCH: Mark order as completed (status = 'abgeschlossen')
-router.patch('/:id/complete', async (req, res) => {
+// PATCH: Mark order as completed
+router.patch('/:id/complete', authenticateToken, async (req, res, next) => {
     try {
-        const db = getDbPool();
-        const [result] = await db.query("UPDATE orders SET status = 'abgeschlossen' WHERE id = ?", [req.params.id]);
-        if (result.affectedRows === 0) {
-            console.log("[ERROR] Order not found for id:", req.params.id);
+        const success = await OrderService.completeOrder(req.params.id);
+        if (!success) {
             return res.status(404).json({ message: 'Order not found.' });
         }
         res.json({ message: 'Order marked as completed.' });
     } catch (err) {
         console.log("[ERROR] Failed to complete order:", err);
-        res.status(500).json({ message: 'Failed to complete order.' });
+        next(err);
     }
 });
 
 // POST a new order
-router.post('/', orderValidationRules(), validate, async (req, res) => {
+router.post('/', authenticateToken, orderValidationRules(), validate, async (req, res, next) => {
     try {
         const newOrder = await OrderService.createOrder(req.body);
         res.status(201).json({ message: "Order created successfully", data: newOrder });
     } catch (err) {
-    console.log('[ERROR] Failed to create order:', err);
-    res.status(500).json({ message: "Failed to create order." });
+        console.log('[ERROR] Failed to create order:', err);
+        next(err);
     }
 });
 
+
 // PUT (update) an existing order
-router.put('/:id', orderValidationRules(), validate, async (req, res) => {
+router.put('/:id', authenticateToken, orderValidationRules(), validate, async (req, res, next) => {
     try {
-        const db = getDbPool();
-        // Hole das aktuelle Fertigstellungsdatum
-        const [orders] = await db.query('SELECT completionDate FROM orders WHERE id = ?', [req.params.id]);
-        if (!orders || orders.length === 0) {
-            return res.status(404).json({ message: 'Order not found.'});
+        const updatedOrder = await OrderService.updateOrder(req.params.id, req.body);
+        if (!updatedOrder) {
+            return res.status(404).json({ message: 'Order not found.' });
         }
-        const oldCompletionDate = orders[0].completionDate;
-        // Wenn das Datum geändert wurde, speichere das alte Datum in previousCompletionDate
-        let updateSql = 'UPDATE orders SET customerFirstName=?, customerLastName=?, orderNumber=?, status=?, completionDate=?, branch=?';
-        let params = [req.body.customerFirstName, req.body.customerLastName, req.body.orderNumber, req.body.status, req.body.completionDate, req.body.branch];
-        if (req.body.completionDate && req.body.completionDate !== oldCompletionDate) {
-            updateSql += ', previousCompletionDate=?';
-            params.push(oldCompletionDate);
-        }
-        updateSql += ' WHERE id=?';
-        params.push(req.params.id);
-        await db.query(updateSql, params);
-        // Gib den neuen und alten Wert zurück
-        res.json({ message: 'Order updated successfully', data: { ...req.body, previousCompletionDate: oldCompletionDate } });
+        res.json({ message: 'Order updated successfully', data: updatedOrder });
     } catch (err) {
         console.log('[ERROR] Failed to update order:', err);
-        res.status(500).json({ message: 'Failed to update order.' });
+        next(err);
     }
 });
 
 // DELETE an order
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticateToken, isAdmin, async (req, res, next) => {
     try {
         const result = await OrderService.deleteOrder(req.params.id);
          if (!result) {
@@ -124,8 +90,8 @@ router.delete('/:id', async (req, res) => {
         }
         res.status(200).json({ message: 'Order deleted successfully.' });
     } catch (err) {
-    console.log('[ERROR] Failed to delete order:', err);
-    res.status(500).json({ message: 'Failed to delete order.' });
+        console.log('[ERROR] Failed to delete order:', err);
+        next(err);
     }
 });
 

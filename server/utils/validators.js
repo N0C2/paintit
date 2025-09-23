@@ -36,3 +36,24 @@ export const loginValidationRules = () => {
         body('password').notEmpty().withMessage('Password cannot be empty'),
     ];
 };
+
+export const userCreationValidationRules = () => {
+    return [
+        body('firstName').notEmpty().withMessage('Vorname ist erforderlich').trim().escape(),
+        body('lastName').notEmpty().withMessage('Nachname ist erforderlich').trim().escape(),
+        body('branch').notEmpty().withMessage('Filiale ist erforderlich'),
+        body('email').isEmail().withMessage('Bitte gültige Email angeben').normalizeEmail(),
+        body('password').isLength({ min: 6 }).withMessage('Passwort muss mindestens 6 Zeichen haben'),
+        body('role').notEmpty().withMessage('Rolle ist erforderlich').trim().escape(),
+    ];
+};
+
+export const userUpdateValidationRules = () => {
+    return [
+        body('firstName').notEmpty().withMessage('Vorname ist erforderlich').trim().escape(),
+        body('lastName').notEmpty().withMessage('Nachname ist erforderlich').trim().escape(),
+        body('branch').notEmpty().withMessage('Filiale ist erforderlich'),
+        body('email').isEmail().withMessage('Bitte gültige Email angeben').normalizeEmail(),
+        body('role').notEmpty().withMessage('Rolle ist erforderlich').trim().escape(),
+    ];
+};

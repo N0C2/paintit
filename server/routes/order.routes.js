@@ -37,9 +37,9 @@ router.get('/:id', async (req, res) => {
         const db = getDbPool();
         // Use a LEFT JOIN to get the branch name directly
         const [orders] = await db.query(`
-            SELECT o.*, b.name as branchName 
+            SELECT o.*, b.name as branchName
             FROM orders o
-            LEFT JOIN branches b ON o.branchId = b.id
+            LEFT JOIN branch b ON o.branchId = b.id
             WHERE o.id = ?
         `, [req.params.id]);
 

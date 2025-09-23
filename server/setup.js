@@ -43,12 +43,12 @@ async function setupDatabase() {
 
     // Branches Table
     await connection.query(`
-      CREATE TABLE IF NOT EXISTS branches (
+      CREATE TABLE IF NOT EXISTS branch (
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(255) NOT NULL UNIQUE
       );
     `);
-    console.log('- Tabelle "branches" erstellt.');
+    console.log('- Tabelle "branch" erstellt.');
 
     // User-Branch Mapping Table (Many-to-Many)
     await connection.query(`
@@ -57,7 +57,7 @@ async function setupDatabase() {
         branchId INT,
         PRIMARY KEY (userId, branchId),
         FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY (branchId) REFERENCES branches(id) ON DELETE CASCADE
+        FOREIGN KEY (branchId) REFERENCES branch(id) ON DELETE CASCADE
       );
     `);
     console.log('- Tabelle "user_branches" erstellt.');
@@ -78,7 +78,7 @@ async function setupDatabase() {
         vin VARCHAR(255),
         paintNumber VARCHAR(255),
         additionalOrderInfo TEXT,
-        FOREIGN KEY (branchId) REFERENCES branches(id) ON DELETE SET NULL
+        FOREIGN KEY (branchId) REFERENCES branch(id) ON DELETE SET NULL
       );
     `);
     console.log('- Tabelle "orders" erstellt.');
@@ -106,6 +106,8 @@ async function setupDatabase() {
     console.log('- Tabelle "info" erstellt.');
     await connection.query(`CREATE TABLE IF NOT EXISTS roles (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) UNIQUE NOT NULL)`);
     console.log('- Tabelle "roles" erstellt.');
+    await connection.query(`CREATE TABLE IF NOT EXISTS status (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) UNIQUE NOT NULL)`);
+    console.log('- Tabelle "status" erstellt.');
 
     console.log('Tabellen erfolgreich erstellt oder bereits vorhanden.');
 
@@ -114,7 +116,7 @@ async function setupDatabase() {
     // Using INSERT IGNORE to prevent errors if data already exists
     const branches = ['Heufeld', 'Rosenheim', 'München'];
     for (const name of branches) {
-        await connection.query('INSERT IGNORE INTO branches (name) VALUES (?)', [name]);
+        await connection.query('INSERT IGNORE INTO branch (name) VALUES (?)', [name]);
     }
 
     const parts = ['Kotflügel VL.', 'Stoßstange vorne', 'Türe hinten rechts'];
@@ -135,6 +137,11 @@ async function setupDatabase() {
     const roles = ['Admin', 'Werkstattleiter', 'Lackierer', 'Buchhaltung', 'Mechaniker'];
     for (const name of roles) {
         await connection.query('INSERT IGNORE INTO roles (name) VALUES (?)', [name]);
+    }
+
+    const statuses = ['offen', 'in Bearbeitung', 'wartet auf Teile', 'abgeschlossen'];
+    for (const name of statuses) {
+        await connection.query('INSERT IGNORE INTO status (name) VALUES (?)', [name]);
     }
     
     console.log('Seed-Daten hinzugefügt.');

@@ -19,6 +19,7 @@ import LoginForm from './components/LoginForm';
 import Layout from './components/Layout';
 import NewOrderForm from './components/NewOrderForm';
 import OrderList from './components/OrderList';
+import OrderDetailView from './components/OrderDetailView';
 import EditOrderForm from './components/EditOrderForm';
 import RegisterUserForm from './components/RegisterUserForm';
 import UserManagement from './components/UserManagement';
@@ -80,6 +81,7 @@ const App: React.FC = () => {
                     <Route index element={<Navigate to="/orders/new" replace />} />
                     <Route path="orders" element={<OrderList token={token} API_URL={API_URL} role={role} />} />
                     <Route path="orders/completed" element={<CompletedOrderList token={token} API_URL={API_URL} role={role} />} />
+                    <Route path="orders/:orderId" element={<OrderDetailView token={token!} API_URL={API_URL} />} />
                     <Route path="orders/new" element={<NewOrderForm token={token} API_URL={API_URL} />} />
                     <Route path="orders/:orderId/edit" element={<EditOrderForm token={token} API_URL={API_URL} />} />
                     {role === 'admin' && <Route path="users/new" element={<RegisterUserForm token={token!} API_URL={API_URL} />} />}

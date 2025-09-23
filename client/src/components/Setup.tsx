@@ -4,7 +4,7 @@ import '../App.css';
 interface SetupProps { API_URL: string; }
 
 const Setup: React.FC<SetupProps> = ({ API_URL }) => {
-    const [formData, setFormData] = useState({ dbHost: '127.0.0.1', dbUser: '', dbPassword: '', dbName: '', adminEmail: '', adminPassword: '', apiUrl: 'http://localhost:3001/api' });
+    const [formData, setFormData] = useState({ dbHost: '127.0.0.1', dbUser: '', dbPassword: '', dbName: '', adminEmail: '', adminPassword: '' });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
@@ -28,17 +28,6 @@ const Setup: React.FC<SetupProps> = ({ API_URL }) => {
         }
     };
 
-    // Öffentliche IP ermitteln und API-URL setzen
-    const fetchPublicIp = async () => {
-        try {
-            const res = await fetch('https://api.ipify.org?format=json');
-            const data = await res.json();
-            setFormData(f => ({ ...f, apiUrl: `http://${data.ip}:3001/api` }));
-        } catch {
-            alert('Öffentliche IP konnte nicht ermittelt werden.');
-        }
-    };
-
     return (
         <div className="login-container">
             <div className="form-container" style={{maxWidth: '600px'}}>
@@ -55,13 +44,6 @@ const Setup: React.FC<SetupProps> = ({ API_URL }) => {
                     <h3>Admin-Konto</h3>
                     <div className="form-group"><label>Admin Email</label><input type="email" name="adminEmail" value={formData.adminEmail} onChange={handleChange} required /></div>
                     <div className="form-group"><label>Admin Passwort</label><input type="password" name="adminPassword" value={formData.adminPassword} onChange={handleChange} required /></div>
-                    <div className="form-group">
-                        <label>API-URL (für Frontend, z.B. http://0.0.0.0:3001/api)</label>
-                        <div style={{display:'flex',gap:'0.5rem'}}>
-                            <input name="apiUrl" value={formData.apiUrl} onChange={handleChange} placeholder="http://0.0.0.0:3001/api" style={{flex:1}} />
-                            <button type="button" className="secondary-button" onClick={fetchPublicIp}>Öffentliche IP eintragen</button>
-                        </div>
-                    </div>
                     <button type="submit" className="primary-button" style={{width: '100%', marginTop: '1rem'}} disabled={loading || !!success}>
                         {loading ? 'Wird eingerichtet...' : (success ? 'Abgeschlossen' : 'Setup abschließen')}
                     </button>

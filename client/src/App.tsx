@@ -29,8 +29,8 @@ const App: React.FC = () => {
     const [needsSetup, setNeedsSetup] = useState(false);
     const [token, setToken] = useState<string | null>(null);
     const [role, setRole] = useState<string | null>(null);
-    // API-URL über Umgebungsvariable (VITE_API_URL) konfigurierbar, Fallback auf 0.0.0.0
-    const API_URL = import.meta.env.VITE_API_URL || 'http://0.0.0.0:3001/api';
+    // API-URL über Umgebungsvariable (VITE_API_URL) konfigurierbar, Fallback auf relativen Pfad
+    const API_URL = import.meta.env.VITE_API_URL || '/api';
 
     useEffect(() => {
         const checkStatusAndToken = async () => {

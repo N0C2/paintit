@@ -35,7 +35,7 @@ const App: React.FC = () => {
     useEffect(() => {
         const checkStatusAndToken = async () => {
             try {
-                const response = await fetch(`${API_URL.replace(/\/api$/, '')}/status`);
+                const response = await fetch(`${API_URL}/status`);
                 const data = await response.json();
                 setNeedsSetup(!data.setupComplete);
                 const storedToken = localStorage.getItem('authToken');

@@ -11,10 +11,9 @@ import authRouter from './routes/auth.routes.js';
 import orderRouter from './routes/order.routes.js';
 import dropdownRouter from './routes/dropdown.routes.js';
 import userRouter from './routes/user.routes.js';
-
-if (isSetupComplete()) {
-    dotenv.config();
-}
+ 
+// Lade Umgebungsvariablen immer am Anfang
+dotenv.config();
 
 const app = express();
 const port = 3001;

@@ -41,7 +41,7 @@ export const createUser = async (userData) => {
 export const getDropdowns = async () => {
     const db = getDbPool();
     const [branches] = await db.query('SELECT name FROM branch');
-    const [roles] = await db.query('SELECT name FROM status');
+    const [roles] = await db.query('SELECT name FROM roles');
     return { branches: branches.map(b => b.name), roles: roles.map(r => r.name) };
 };
 

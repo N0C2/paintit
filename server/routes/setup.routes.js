@@ -30,7 +30,8 @@ router.post('/initialize', async (req, res) => {
 
 
         // Create tables (richtige Reihenfolge für Foreign Keys)
-        await dbConnection.execute(`CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, email VARCHAR(255) UNIQUE NOT NULL, password VARCHAR(255) NOT NULL, role VARCHAR(50) NOT NULL, firstName VARCHAR(255), lastName VARCHAR(255))`);
+        await dbConnection.execute(`CREATE TABLE roles (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50) UNIQUE NOT NULL)`);
+        await dbConnection.execute(`CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, email VARCHAR(255) UNIQUE NOT NULL, password VARCHAR(255) NOT NULL, role VARCHAR(50) NOT NULL, firstName VARCHAR(255), lastName VARCHAR(255), FOREIGN KEY (role) REFERENCES roles(name) ON UPDATE CASCADE ON DELETE RESTRICT)`);
         await dbConnection.execute(`CREATE TABLE branch (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) UNIQUE NOT NULL)`);
         await dbConnection.execute(`CREATE TABLE user_branches (user_id INT, branch_id INT, PRIMARY KEY(user_id, branch_id), FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE, FOREIGN KEY (branch_id) REFERENCES branch(id) ON DELETE CASCADE)`);
         await dbConnection.execute(`CREATE TABLE orders (
@@ -53,12 +54,16 @@ router.post('/initialize', async (req, res) => {
         await dbConnection.execute(`CREATE TABLE status (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) UNIQUE NOT NULL)`);
 
         // Seed data
+        const roles = ['admin', 'user'];
         const branches = ['Heufeld', 'Rosenheim', 'München'];
         const parts = ['Kotflügel VL.', 'Stoßstange vorne', 'Türe hinten rechts'];
         const codes = ['-S2', '-S3', '-L1'];
         const infos = ['Zusatzinfo', 'Kratzer', 'Delle'];
-        const statuses = ['Admin', 'Werkstattleiter', 'Lackierer', 'Buchhaltung', 'Mechaniker'];
+        const statuses = ['Werkstattleiter', 'Lackierer', 'Buchhaltung', 'Mechaniker'];
 
+        for (const name of roles) {
+            await dbConnection.execute('INSERT INTO roles (name) VALUES (?)', [name]);
+        }
         for (const name of branches) {
             await dbConnection.execute('INSERT INTO branch (name) VALUES (?)', [name]);
         }

@@ -42,7 +42,7 @@ router.get('/:id', authenticateToken, async (req, res, next) => {
 });
 
 // PATCH: Mark order as completed
-router.patch('/:id/complete', authenticateToken, async (req, res, next) => {
+router.patch('/:id/complete', authenticateToken, isAdmin, async (req, res, next) => {
     try {
         const success = await OrderService.completeOrder(req.params.id);
         if (!success) {

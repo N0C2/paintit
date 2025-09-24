@@ -1,8 +1,66 @@
+
+import fs from 'fs';
+import crypto from 'crypto';
 import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
 
+// --- .env File Creation ---
+const envPath = '.env';
+
+// Check if .env file exists
+if (!fs.existsSync(envPath)) {
+    console.log('Keine .env-Datei gefunden. Erstelle eine neue .env-Datei mit Standardwerten...');
+    
+    // Generate a secure JWT secret
+    const jwtSecret = crypto.randomBytes(32).toString('hex');
+    
+    // Define default .env content
+    const envContent = `
+# ==================================================================
+# Paint.IT Konfiguration
+# ==================================================================
+
+# --- Datenbank-Konfiguration ---
+# Passe diese Werte an deine lokale MySQL-Installation an.
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=paintit
+
+# --- JWT-Geheimnis ---
+# Dieses Geheimnis wird zur Sicherung der Benutzer-Logins verwendet.
+# Es wurde automatisch generiert.
+JWT_SECRET=${jwtSecret}
+
+# --- CORS Origin für die Produktion ---
+# Wenn du das Frontend auf einer anderen Domain als das Backend hostest,
+# trage hier die URL des Frontends ein (z.B. http://example.com).
+# Für den lokalen Betrieb ist keine Änderung notwendig.
+CORS_ORIGIN=
+    `.trim();
+
+    // Write the new .env file
+    fs.writeFileSync(envPath, envContent);
+    
+    console.log(`
+    ------------------------------------------------------------------
+    .env-Datei erfolgreich erstellt!
+
+    WICHTIG: Bitte überprüfe die Datenbank-Anmeldeinformationen in der
+    neuen ".env"-Datei und passe sie bei Bedarf an.
+
+    Führe danach das Setup erneut aus mit: npm run setup
+    ------------------------------------------------------------------
+    `);
+    
+    // Exit the script so the user can check the .env file
+    process.exit(0);
+}
+
+// Load environment variables from .env file
 dotenv.config();
 
+// --- Database Setup ---
 const dbConfig = {
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -14,15 +72,19 @@ async function setupDatabase() {
   let connection;
   try {
     console.log('Verbinde mit der Datenbank...');
-    // Zuerst ohne Datenbank verbinden, um sie zu erstellen
+    // Connect without specifying the database first to create it
     connection = await mysql.createConnection({
       host: dbConfig.host,
       user: dbConfig.user,
       password: dbConfig.password,
     });
 
-    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
-    await connection.query(`USE \`${dbConfig.database}\`;`);
+    await connection.query(`CREATE DATABASE IF NOT EXISTS 
+${dbConfig.database}
+ CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
+    await connection.query(`USE 
+${dbConfig.database}
+;`);
     console.log(`Datenbank '${dbConfig.database}' ist bereit.`);
 
     console.log('Erstelle Tabellen...');
@@ -39,123 +101,4 @@ async function setupDatabase() {
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    console.log('- Tabelle "users" erstellt.');
-
-    // Branches Table
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS branch (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL UNIQUE
-      );
-    `);
-    console.log('- Tabelle "branch" erstellt.');
-
-    // User-Branch Mapping Table (Many-to-Many)
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS user_branches (
-        userId INT,
-        branchId INT,
-        PRIMARY KEY (userId, branchId),
-        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY (branchId) REFERENCES branch(id) ON DELETE CASCADE
-      );
-    `);
-    console.log('- Tabelle "user_branches" erstellt.');
-
-    // Orders Table
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS orders (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        orderNumber VARCHAR(100) NOT NULL UNIQUE,
-        customerFirstName VARCHAR(128),
-        customerLastName VARCHAR(128),
-        licensePlate VARCHAR(50),
-        status VARCHAR(50) DEFAULT 'offen',
-        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        completionDate DATE,
-        previousCompletionDate TEXT,
-        branchId INT,
-        vin VARCHAR(255),
-        paintNumber VARCHAR(255),
-        additionalOrderInfo TEXT,
-        FOREIGN KEY (branchId) REFERENCES branch(id) ON DELETE SET NULL
-      );
-    `);
-    console.log('- Tabelle "orders" erstellt.');
-
-    // Order Items Table
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS order_items (
-        id INT AUTO_INCREMENT PRIMARY KEY, 
-        order_id INT, 
-        part VARCHAR(255), 
-        code VARCHAR(255), 
-        info VARCHAR(255), 
-        additional_info TEXT, 
-        FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
-      );
-    `);
-    console.log('- Tabelle "order_items" erstellt.');
-
-    // Dropdown Tables
-    await connection.query(`CREATE TABLE IF NOT EXISTS part (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) UNIQUE NOT NULL)`);
-    console.log('- Tabelle "part" erstellt.');
-    await connection.query(`CREATE TABLE IF NOT EXISTS code (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) UNIQUE NOT NULL)`);
-    console.log('- Tabelle "code" erstellt.');
-    await connection.query(`CREATE TABLE IF NOT EXISTS info (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) UNIQUE NOT NULL)`);
-    console.log('- Tabelle "info" erstellt.');
-    await connection.query(`CREATE TABLE IF NOT EXISTS roles (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) UNIQUE NOT NULL)`);
-    console.log('- Tabelle "roles" erstellt.');
-    await connection.query(`CREATE TABLE IF NOT EXISTS status (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) UNIQUE NOT NULL)`);
-    console.log('- Tabelle "status" erstellt.');
-
-    console.log('Tabellen erfolgreich erstellt oder bereits vorhanden.');
-
-    console.log('Füge Seed-Daten für Dropdowns hinzu (falls nicht vorhanden)...');
-    
-    // Using INSERT IGNORE to prevent errors if data already exists
-    const branches = ['Heufeld', 'Rosenheim', 'München'];
-    for (const name of branches) {
-        await connection.query('INSERT IGNORE INTO branch (name) VALUES (?)', [name]);
-    }
-
-    const parts = ['Kotflügel VL.', 'Stoßstange vorne', 'Türe hinten rechts'];
-    for (const name of parts) {
-        await connection.query('INSERT IGNORE INTO part (name) VALUES (?)', [name]);
-    }
-
-    const codes = ['-S2', '-S3', '-L1'];
-    for (const name of codes) {
-        await connection.query('INSERT IGNORE INTO code (name) VALUES (?)', [name]);
-    }
-
-    const infos = ['Zusatzinfo', 'Kratzer', 'Delle'];
-    for (const name of infos) {
-        await connection.query('INSERT IGNORE INTO info (name) VALUES (?)', [name]);
-    }
-    
-    const roles = ['Admin', 'Werkstattleiter', 'Lackierer', 'Buchhaltung', 'Mechaniker'];
-    for (const name of roles) {
-        await connection.query('INSERT IGNORE INTO roles (name) VALUES (?)', [name]);
-    }
-
-    const statuses = ['offen', 'in Bearbeitung', 'wartet auf Teile', 'abgeschlossen'];
-    for (const name of statuses) {
-        await connection.query('INSERT IGNORE INTO status (name) VALUES (?)', [name]);
-    }
-    
-    console.log('Seed-Daten hinzugefügt.');
-
-  } catch (error) {
-    console.error('Fehler beim Datenbank-Setup:', error);
-    process.exit(1);
-  } finally {
-    if (connection) {
-      await connection.end();
-      console.log('Datenbankverbindung geschlossen.');
-    }
-    console.log('Datenbank-Setup abgeschlossen.');
-  }
-}
-
-setupDatabase();
+    console.log('- Tabelle 

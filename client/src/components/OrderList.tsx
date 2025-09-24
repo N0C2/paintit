@@ -131,7 +131,7 @@ const OrderList: React.FC<OrderListProps> = ({ token, API_URL, role }) => {
                                 </td>
                                 <td style={{ padding: '0.75rem', display: 'flex', gap: '0.5rem' }} onClick={(e) => e.stopPropagation()}>
                                     <Link to={`/orders/${order.id}`} className="secondary-button" style={{padding: '0.4rem 0.8rem', textDecoration: 'none'}}>Ansehen</Link>
-                                    <button onClick={() => setShowDeleteModal(order.id)} className="danger-button" style={{padding: '0.4rem 0.8rem'}}>Löschen</button>
+                                    {role === 'admin' && <button onClick={() => setShowDeleteModal(order.id)} className="danger-button" style={{padding: '0.4rem 0.8rem'}}>Löschen</button>}
                                     {role === 'admin' && order.status !== 'abgeschlossen' && (
                                         <button
                                             className="primary-button"

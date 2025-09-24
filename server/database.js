@@ -5,6 +5,10 @@ import fs from 'fs';
 let pool;
 let setupStatus = null; // Cache the setup status
 
+export const resetSetupStatus = () => {
+    setupStatus = null;
+};
+
 export const isSetupComplete = async () => {
     if (setupStatus !== null) return setupStatus; // Return cached status
 
@@ -27,7 +31,7 @@ export const isSetupComplete = async () => {
         // Try to connect to the database
         connection = await mysql.createConnection(dbConfig);
         // Check if the 'users' table exists
-        const [rows] = await connection.query("SHOW TABLES LIKE 'users'");
+        const [rows] = await connection.query("SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?", [dbConfig.database, 'users']);
         setupStatus = rows.length > 0;
         return setupStatus;
     } catch (error) {

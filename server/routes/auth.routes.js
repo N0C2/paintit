@@ -7,7 +7,7 @@ import { loginValidationRules, validate } from '../utils/validators.js';
 const router = express.Router();
 
 router.post('/login', loginValidationRules(), validate, async (req, res) => {
-    const db = getDbPool();
+    const db = await getDbPool();
     if (!db) return res.status(503).json({ message: "Application not configured." });
 
     try {

@@ -1,7 +1,7 @@
 import { getDbPool } from '../database.js';
 
 export const getAllOrders = async () => {
-    const db = getDbPool();
+    const db = await getDbPool();
     const [orders] = await db.query(`
         SELECT o.*, b.name as branchName 
         FROM orders o
@@ -13,7 +13,7 @@ export const getAllOrders = async () => {
 };
 
 export const getCompletedOrders = async () => {
-    const db = getDbPool();
+    const db = await getDbPool();
     const [orders] = await db.query(`
         SELECT o.*, b.name as branchName 
         FROM orders o
@@ -25,7 +25,7 @@ export const getCompletedOrders = async () => {
 };
 
 export const getOrderById = async (id) => {
-    const db = getDbPool();
+    const db = await getDbPool();
     const [orders] = await db.query(`
         SELECT o.*, b.name as branchName
         FROM orders o
@@ -49,7 +49,7 @@ export const getOrderById = async (id) => {
 };
 
 export const createOrder = async (orderData) => {
-    const db = getDbPool();
+    const db = await getDbPool();
     const connection = await db.getConnection();
     try {
         await connection.beginTransaction();
@@ -79,7 +79,7 @@ export const createOrder = async (orderData) => {
 };
 
 export const updateOrder = async (id, orderData) => {
-    const db = getDbPool();
+    const db = await getDbPool();
     const connection = await db.getConnection();
     try {
         await connection.beginTransaction();
@@ -116,13 +116,13 @@ export const updateOrder = async (id, orderData) => {
 };
 
 export const completeOrder = async (id) => {
-    const db = getDbPool();
+    const db = await getDbPool();
     const [result] = await db.query("UPDATE orders SET status = 'abgeschlossen' WHERE id = ?", [id]);
     return result.affectedRows > 0;
 };
 
 export const deleteOrder = async (id) => {
-    const db = getDbPool();
+    const db = await getDbPool();
     const connection = await db.getConnection();
     try {
         await connection.beginTransaction();

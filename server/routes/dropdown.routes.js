@@ -15,7 +15,7 @@ router.get('/:type', authenticateToken, async (req, res) => {
     }
 
     try {
-        const db = getDbPool();
+        const db = await getDbPool();
             const [rows] = await db.query(`SELECT name FROM \`${type}\``);
         res.json(rows.map(r => r.name));
     } catch (err) {

@@ -3,6 +3,8 @@ import fs from 'fs/promises';
 import mysql from 'mysql2/promise';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
+import dotenv from 'dotenv';
+import { resetSetupStatus } from '../database.js';
 
 const router = express.Router();
 
@@ -27,6 +29,9 @@ router.post('/initialize', async (req, res) => {
             envContent += `\nVITE_API_URL=${apiUrl}`;
         }
         await fs.writeFile('./.env', envContent);
+
+        // Explicitly reload environment variables after writing .env
+        dotenv.config({ path: './.env', override: true });
 
 
         // Create tables (richtige Reihenfolge für Foreign Keys)

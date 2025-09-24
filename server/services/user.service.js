@@ -2,7 +2,7 @@ import { getDbPool } from '../database.js';
 import bcrypt from 'bcrypt';
 
 export const createUser = async (userData) => {
-    const db = getDbPool();
+    const db = await getDbPool();
     const connection = await db.getConnection();
     try {
         await connection.beginTransaction();
@@ -39,14 +39,14 @@ export const createUser = async (userData) => {
 };
 
 export const getDropdowns = async () => {
-    const db = getDbPool();
+    const db = await getDbPool();
     const [branches] = await db.query('SELECT name FROM branch');
     const [roles] = await db.query('SELECT name FROM roles');
     return { branches: branches.map(b => b.name), roles: roles.map(r => r.name) };
 };
 
 export const getAllUsers = async () => {
-    const db = getDbPool();
+    const db = await getDbPool();
     const [users] = await db.query('SELECT id, email, role, firstName, lastName FROM users');
     const [userBranches] = await db.query(`
         SELECT ub.user_id, b.name as branchName
@@ -64,7 +64,7 @@ export const getAllUsers = async () => {
 };
 
 export const updateUser = async (userId, userData) => {
-    const db = getDbPool();
+    const db = await getDbPool();
     const connection = await db.getConnection();
     try {
         await connection.beginTransaction();
@@ -95,7 +95,7 @@ export const updateUser = async (userId, userData) => {
 };
 
 export const deleteUser = async (userId) => {
-    const db = getDbPool();
+    const db = await getDbPool();
     const [result] = await db.query('DELETE FROM users WHERE id = ?', [userId]);
     return result.affectedRows > 0;
 };

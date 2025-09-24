@@ -29,8 +29,8 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 // API Status Route
-app.get('/api/status', (req, res) => {
-    res.json({ setupComplete: isSetupComplete() });
+app.get('/api/status', async (req, res) => {
+    res.json({ setupComplete: await isSetupComplete() });
 });
 
 // API Routes
@@ -56,10 +56,10 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(port, '0.0.0.0', () => {
+app.listen(port, '0.0.0.0', async () => {
     console.log(`Server is running on port ${port}.`);
-    if (isSetupComplete()) {
-        getDbPool(); // Initialize pool on startup
+    if (await isSetupComplete()) {
+        await getDbPool(); // Initialize pool on startup
     } else {
         console.log("Setup not complete. Please navigate to the frontend to begin setup process.");
     }
